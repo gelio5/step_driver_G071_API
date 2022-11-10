@@ -30,13 +30,9 @@ class StepDriver:
     def set_port(self, port_name: str) -> None:
         self.port.port = port_name
 
-    def ping(self):
+    def ping(self) -> None:
         with self.port:
-            message = self.start_byte + \
-                      self.address + \
-                      self.commands['PING'] + \
-                      self.control_sum + \
-                      self.stop_byte
+            message = self.make_frame('PING')
             self.port.write(message)
             try:
                 answer = self.port.read(5)
@@ -57,10 +53,40 @@ class StepDriver:
                 try:
                     answer = self.port.read(5)
                     if answer:
-                        print(address)
+                        print(address, message)
+                        self.set_address(address.to_bytes(length=1, byteorder='big', signed=False))
+                        break
                 except serial.SerialTimeoutException as e:
                     print(e)
                     continue
 
     def set_address(self, address: bytes) -> None:
         self.address = address
+
+    def make_frame(self, command: str) -> bytes:
+        message: bytes = self.start_byte + \
+                         self.address + \
+                         self.commands[command] + \
+                         self.control_sum + \
+                         self.stop_byte
+        return message
+
+    def status(self) -> None:
+        with self.port:
+            message = self.make_frame('STATUS')
+            self.port.write(message)
+            try:
+                answer = self.port.read(30)
+                print(answer)
+            except serial.SerialException as exception:
+                print(exception)
+
+    def info(self) -> None:
+        with self.port:
+            message = self.make_frame('INFO')
+            self.port.write(message)
+            try:
+                answer = self.port.read(30)
+                print(answer)
+            except serial.SerialException as exception:
+                print(exception)

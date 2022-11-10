@@ -6,4 +6,6 @@ if __name__ == '__main__':
     port_number = input('> ')
     driver.set_port(port_name='COM' + port_number)
     driver.find_address()
-    # driver.ping()
+    driver.ping()
+    driver.status()
+    driver.info()
