@@ -25,6 +25,7 @@ class StepDriver:
                            parity=PARITY_NONE,
                            stopbits=STOPBITS_ONE,
                            timeout=0.3)
+        self.address = b'\x51'
 
     def set_port(self, port_name: str) -> None:
         self.port.port = port_name
@@ -32,7 +33,7 @@ class StepDriver:
     def ping(self):
         with self.port:
             message = self.start_byte + \
-                      b'\x51' + \
+                      self.address + \
                       self.commands['PING'] + \
                       self.control_sum + \
                       self.stop_byte
@@ -60,3 +61,6 @@ class StepDriver:
                 except serial.SerialTimeoutException as e:
                     print(e)
                     continue
+
+    def set_address(self, address: bytes) -> None:
+        self.address = address
