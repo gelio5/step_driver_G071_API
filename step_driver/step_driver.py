@@ -26,6 +26,7 @@ class StepDriver:
                              stopbits=STOPBITS_ONE,
                              timeout=0.3)
         self.__address = b'\x51'
+        self.status = dict()
 
     def set_port(self, port_name: str) -> None:
         self.__port.port = port_name
@@ -72,8 +73,22 @@ class StepDriver:
                                  self.__control_sum + \
                                  self.__stop_byte
             case _:
-                raise Exception('Command making for this command not realized!')
+                raise Exception('Making frame for this command not realized!')
         return message
+
+    def parse_status(self, status: bytes) -> dict:
+        hex_status = status.hex()[6:-4]
+        list_status = []
+        for i in range(0, 21, 2):
+            list_status.append(hex_status[i:i + 2])
+        return {
+            'state_flags': list_status[0],
+            'encoder': list_status[1:3],
+            'step_generator': list_status[3:7],
+            'opt_flags': list_status[7],
+            'step_divider': list_status[8],
+            'clearance': list_status[9:]
+        }
 
     def get_status(self) -> None:
         with self.__port:
@@ -82,6 +97,7 @@ class StepDriver:
             try:
                 answer = self.__port.read(30)
                 print(answer)
+                self.status = self.parse_status(answer)
             except serial.SerialException as exception:
                 print(exception)
 
