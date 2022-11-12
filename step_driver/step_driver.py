@@ -27,6 +27,8 @@ class StepDriver:
                              timeout=0.3)
         self.__address = b'\x51'
         self.status = dict()
+        self.__target_position = b'\x00\x00\x00\x00'
+        self.__speed = b'\x00\x00',
 
     def set_port(self, port_name: str) -> None:
         self.__port.port = port_name
@@ -54,7 +56,6 @@ class StepDriver:
                 try:
                     answer = self.__port.read(5)
                     if answer:
-                        print(address, message)
                         self.set_address(address.to_bytes(length=1, byteorder='big', signed=False))
                         break
                 except serial.SerialTimeoutException as e:
@@ -66,7 +67,7 @@ class StepDriver:
 
     def __make_frame(self, command: str) -> bytes:
         match command:
-            case 'PING' | 'STATUS' | 'INFO':
+            case 'PING' | 'STATUS' | 'INFO' | 'STOP':
                 message: bytes = self.__start_byte + \
                                  self.__address + \
                                  self.__commands[command] + \
@@ -108,5 +109,34 @@ class StepDriver:
             try:
                 answer = self.__port.read(30)
                 print(answer)
+            except serial.SerialException as exception:
+                print(exception)
+
+    def run(self, target_position: int, speed: int) -> None:
+        self.__target_position = target_position.to_bytes(length=4, byteorder='big', signed=False)
+        self.__speed = speed.to_bytes(length=2, byteorder='big', signed=False)
+        with self.__port:
+
+            message: bytes = self.__start_byte + \
+                             self.__address + \
+                             self.__commands['RUN'] + \
+                             self.__target_position + \
+                             self.__speed + \
+                             self.__control_sum + \
+                             self.__stop_byte
+            self.__port.write(message)
+            try:
+                answer = self.__port.read(10)
+                print(answer)
+            except serial.SerialException as exception:
+                print(exception)
+
+    def stop(self) -> None:
+        with self.__port:
+            message = self.__make_frame('STOP')
+            self.__port.write(message)
+            try:
+                answer = self.__port.read(10)
+                print(answer.hex())
             except serial.SerialException as exception:
                 print(exception)
