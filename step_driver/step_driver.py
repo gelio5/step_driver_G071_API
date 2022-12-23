@@ -1,6 +1,10 @@
-from struct import pack
+import logging
+from time import sleep
 
 from pymodbus.client import ModbusSerialClient
+from struct import unpack, iter_unpack, pack
+
+_logger = logging.getLogger(__name__)
 
 
 class StepDriver:
@@ -14,7 +18,6 @@ class StepDriver:
         self.device = ModbusSerialClient(
             baudrate=115200,
             port=port,
-            handle_local_echo=True
         )
         self.__current_pos: int = 0
         self.__status: bool = False
@@ -25,10 +28,20 @@ class StepDriver:
         return self.__status
 
     def search_home(self) -> None:
+
+        _logger.info('Searching home started')
         with self.device:
             self.device.write_registers(slave=self.__address,
                                         address=0,
                                         values=[self.__commands['INIT'], 0, self.__speed_to_search_home_pos])
+            self.__update_info()
+            while self.__status:
+                self.__update_info()
+                sleep(0.5)
+            if self.__current_pos != 0:
+                _logger.critical('Driver not in home position')
+            else:
+                _logger.info('Driver in home position')
 
     def stop(self) -> None:
         with self.device:
@@ -37,6 +50,22 @@ class StepDriver:
                                         values=[self.__commands['STOP']])
 
     def move_to_pos(self, position: int, speed: int) -> None:
+        _logger.info(f'Moving to position {position} started')
+        with self.device:
+            self.device.write_registers(slave=self.__address,
+                                        address=2,
+                                        values=[self.__commands['MOVE'], speed, self.__speed_to_search_home_pos,
+                                                position])
+            self.__update_info()
+            while self.__status:
+                self.__update_info()
+                sleep(0.5)
+            if self.__current_pos != position:
+                _logger.critical('Driver not in set position')
+            else:
+                _logger.info('Driver in set position')
+
+    def go_to_pos(self, position: int, speed: int) -> None:
         with self.device:
             self.device.write_registers(slave=self.__address,
                                         address=0,
@@ -45,6 +74,12 @@ class StepDriver:
 
     def __update_info(self) -> None:
         with self.device:
-            return self.device.read_holding_registers(unit=self.__address,
-                                                      count=3,
-                                                      address=8).registers
+            received_data = self.device.read_holding_registers(slave=self.__address,
+                                                               count=3,
+                                                               address=8).registers
+            print(self.device.read_holding_registers(slave=self.__address,
+                                                     count=1,
+                                                     address=11).registers)
+            print(received_data)
+        self.__status = bool(received_data[0])
+        self.__current_pos = unpack('<I', pack('<H', received_data[1]) + pack('<H', received_data[2]))
