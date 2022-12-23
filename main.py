@@ -1,20 +1,18 @@
 from step_driver import StepDriver
+from time import sleep
 
 if __name__ == '__main__':
-    driver = StepDriver()
-    # print('Please input COM-port number need to use:')
-    # port_number = input('> ')
-    port_number = '3'
-    driver.set_port(port_name='COM' + port_number)
-    driver.find_address()
-    # driver.ping()
-    # driver.get_info()
+    driver = StepDriver(modbus_address=2, port='COM3')
+    import logging
 
-    driver.get_status()
-    print(driver.status)
-
-    driver.run(1000, 100)
-    # driver.stop()
-    for i in range(100):
-        driver.get_status()
-        print(i, driver.status['encoder'], driver.status['step_generator'])
+    logging.basicConfig()
+    log = logging.getLogger()
+    log.setLevel(logging.DEBUG)
+    print(driver.get_full_info())
+    driver.move_to_pos(position=20000, speed=1000)
+    sleep(2)
+    driver.stop()
+    print(driver.get_full_info())
+    # for _ in range(5):
+    #     sleep(2)
+    #     print(driver.get_full_info())
