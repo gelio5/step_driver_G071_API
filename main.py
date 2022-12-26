@@ -13,6 +13,7 @@ if __name__ == '__main__':
     # print(driver.get_full_info())
     # driver.move_to_pos(position=20000, speed=4000)
     print(driver.get_status())
+    print(driver.status)
     # print(driver.get_full_info())
     # for _ in range(5):
     #     sleep(2)

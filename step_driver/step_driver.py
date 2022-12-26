@@ -32,7 +32,7 @@ class StepDriver:
     def __init__(self, port: str, modbus_address: int, speed_to_search_home_pos: int = 5000):
         self.device = ModbusSerialClient(
             baudrate=115200,
-            port=port,)
+            port=port, )
         self.__current_pos: int = 0
         self.__status: bool = False
         self.__address = modbus_address
@@ -93,3 +93,5 @@ class StepDriver:
             print(received_data)
         self.__status = bool(received_data[0])
         self.__current_pos = unpack('<I', pack('<HH', *received_data[1:]))[0]
+
+    status = property(fget=get_status)
