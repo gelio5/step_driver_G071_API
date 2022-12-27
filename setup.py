@@ -9,12 +9,14 @@ from setuptools import setup
 setup(
     name='step_driver_G071_API',
     version='0.1',
-    packages=['step_driver'],
+    packages=['step_driver_G071_API'],
     url='https://github.com/gelio5/step_driver_G071_API.git',
-    license='',
+    license='MIT',
     author='Vladislav Reznik',
     author_email='vlreznik97@gmail.com',
-    description='',
-    requires=['pyserial~=3.5', 'pymodbus~=3.0.2']
-
+    description='Stepper driver using MODBUS communication protocol API',
+    requires=['pyserial~=3.5', 'pymodbus~=3.0.2'],
+    zip_safe=True,
+    platforms=['Linux', 'Win', 'Mac OS X'],
+    install_requires = ['pyserial~=3.5', 'pymodbus~=3.0.2']
 )
