@@ -13,7 +13,8 @@ class StepDriver:
     :param modbus_address: MODBUS address used for communication;
     :param speed_to_search_home_pos: (optional) Number of steps per second used for search home;
 
-    Basic control of stepper motors based on the STM32G071 microcontroller using the Modbus protocol.
+    Basic control of stepper motors based on the STM32G071 microcontroller using
+    the Modbus protocol.
 
     Example::
 
@@ -45,7 +46,8 @@ class StepDriver:
         with self.device:
             self.device.write_registers(slave=self.__address,
                                         address=0,
-                                        values=[self.__commands['INIT'], 0, self.__speed_to_search_home_pos])
+                                        values=[self.__commands['INIT'], 0,
+                                                self.__speed_to_search_home_pos])
             self.__update_info()
             while self.__status:
                 self.__update_info()
@@ -65,7 +67,8 @@ class StepDriver:
         with self.device:
             self.device.write_registers(slave=self.__address,
                                         address=2,
-                                        values=[self.__commands['MOVE'], speed, self.__speed_to_search_home_pos,
+                                        values=[self.__commands['MOVE'], speed,
+                                                self.__speed_to_search_home_pos,
                                                 position])
             self.__update_info()
             while self.__status:
@@ -79,7 +82,8 @@ class StepDriver:
         with self.device:
             self.device.write_registers(slave=self.__address,
                                         address=0,
-                                        values=[self.__commands['MOVE'], speed, self.__speed_to_search_home_pos,
+                                        values=[self.__commands['MOVE'], speed,
+                                                self.__speed_to_search_home_pos,
                                                 position])
 
     def __update_info(self) -> None:
