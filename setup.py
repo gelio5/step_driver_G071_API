@@ -19,6 +19,7 @@ setup(
     Step driver aims to be fully implemented API for managing stepper driver via MODBUS RTU, which
     was realized in STM32G071 microcontroller.
     ''',
+
     requires=['pyserial', 'pymodbus'],
     zip_safe=True,
     platforms=['Linux', 'Win', 'Mac OS X'],
