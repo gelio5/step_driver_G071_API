@@ -67,7 +67,7 @@ class StepDriver:
 
     def move_to_pos(self, position: int, speed: int) -> None:
         """Move to position with set speed"""
-        _logger.info(f'Moving to position {position} started')
+        _logger.info('Moving to position {} started'.format(position))
         with self.device:
             self.device.write_registers(slave=self.__address,
                                         address=2,
