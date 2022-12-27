@@ -7,9 +7,9 @@ to install the package from the source archive.
 from setuptools import setup
 
 setup(
-    name='step_driver_G071_API',
+    name='step_driver_g071_api',
     version='0.1',
-    packages=['step_driver_G071_API'],
+    packages=['step_driver_g071_api'],
     url='https://github.com/gelio5/step_driver_G071_API.git',
     license='MIT',
     author='Vladislav Reznik',

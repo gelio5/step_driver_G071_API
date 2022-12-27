@@ -19,7 +19,7 @@ class StepDriver:
 
     Example::
 
-        from step_driver_G071_API import StepDriver
+        from step_driver_g071_api import StepDriver
 
         x_axis = StepDriver(port='COM3', modbus_address=4)
         x_axis.search_home()
