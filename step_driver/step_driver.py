@@ -43,6 +43,7 @@ class StepDriver:
         return self.__status
 
     def search_home(self) -> None:
+        """Search home position"""
         _logger.info('Searching home started')
         with self.device:
             self.device.write_registers(slave=self.__address,
@@ -58,12 +59,14 @@ class StepDriver:
                 _logger.info('Driver in home position')
 
     def stop(self) -> None:
+        """Stop moving"""
         with self.device:
             self.device.write_registers(slave=self.__address,
                                         address=0,
                                         values=[self.__commands['STOP']])
 
     def move_to_pos(self, position: int, speed: int) -> None:
+        """Move to position with set speed"""
         _logger.info(f'Moving to position {position} started')
         with self.device:
             self.device.write_registers(slave=self.__address,
@@ -80,6 +83,7 @@ class StepDriver:
                 _logger.info('Driver in set position')
 
     def go_to_pos_without_control(self, position: int, speed: int) -> None:
+        """Move to position without control"""
         with self.device:
             self.device.write_registers(slave=self.__address,
                                         address=0,
@@ -88,6 +92,7 @@ class StepDriver:
                                                 position])
 
     def __update_info(self) -> None:
+        """Update info about driver"""
         with self.device:
             received_data = self.device.read_holding_registers(slave=self.__address,
                                                                count=3,
