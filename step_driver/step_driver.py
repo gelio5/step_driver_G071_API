@@ -1,3 +1,4 @@
+"""Stepper driver using MODBUS communication protocol"""
 import logging
 from struct import unpack, pack
 

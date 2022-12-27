@@ -1,3 +1,9 @@
+"""
+Installs pymodbus using distutils
+Run:
+    python setup.py install
+to install the package from the source archive.
+"""
 from setuptools import setup
 
 setup(
@@ -8,5 +14,7 @@ setup(
     license='',
     author='Vladislav Reznik',
     author_email='vlreznik97@gmail.com',
-    description=''
+    description='',
+    requires=['pyserial~=3.5', 'pymodbus~=3.0.2']
+
 )
