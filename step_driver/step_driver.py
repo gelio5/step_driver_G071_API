@@ -1,142 +1,93 @@
-import serial
-from serial import Serial
-from serial.serialutil import EIGHTBITS, PARITY_NONE, STOPBITS_ONE
+import logging
+from struct import unpack, pack
+
+from pymodbus.client import ModbusSerialClient
+
+_logger = logging.getLogger(__name__)
 
 
 class StepDriver:
-    __control_sum = b'\x00'
-    __start_byte = b'\xFD'
-    __stop_byte = b'\xFE'
-    __commands = {
-        'PING': b'\x01',
-        'INFO': b'\x02',
-        'STATUS': b'\x03',
-        # 'RETRANSLATE': b'\x04',
-        'TOGGLE_POWER': b'\x05',
-        'RUN': b'\x06',
-        'SET_POS': b'\07',
-        'STOP': b'\x08',
-        'RUN_MANUAL': b'\x09'
+    """**StepDriver**.
+
+    :param port: Serial port used for communication;
+    :param modbus_address: MODBUS address used for communication;
+    :param speed_to_search_home_pos: (optional) Number of steps per second used for search home;
+
+    Basic control of stepper motors based on the STM32G071 microcontroller using the Modbus protocol.
+
+    Example::
+
+        from step_driver import StepDriver
+
+        x_axis = StepDriver(port='COM3', modbus_address=4)
+        x_axis.search_home()
+        x_axis.move_to_pos(position=5000, speed=2000)
+    """
+    __commands: dict = {
+        'MOVE': 0x01,
+        'INIT': 0x03,
+        'STOP': 0x04
     }
 
-    def __init__(self):
-        self.__port = Serial(baudrate=115200,
-                             bytesize=EIGHTBITS,
-                             parity=PARITY_NONE,
-                             stopbits=STOPBITS_ONE,
-                             timeout=0.3)
-        self.__address = b'\x51'
-        self.status = dict()
-        self.__target_position = b'\x00\x00\x00\x00'
-        self.__speed = b'\x00\x00',
+    def __init__(self, port: str, modbus_address: int, speed_to_search_home_pos: int = 5000):
+        self.device = ModbusSerialClient(baudrate=115200,
+                                         port=port, )
+        self.__current_pos: int = 0
+        self.__status: bool = False
+        self.__address = modbus_address
+        self.__speed_to_search_home_pos = speed_to_search_home_pos
 
-    def set_port(self, port_name: str) -> None:
-        self.__port.port = port_name
+    def __get_status(self) -> bool:
+        return self.__status
 
-    def ping(self) -> None:
-        with self.__port:
-            message = self.__make_frame('PING')
-            self.__port.write(message)
-            try:
-                answer = self.__port.read(5)
-                print(answer)
-            except serial.SerialException as exception:
-                print(exception)
-
-    def find_address(self) -> None:
-        with self.__port:
-            for address in range(256):
-                message: bytes = self.__start_byte + \
-                                 address.to_bytes(length=1, byteorder='big', signed=False) + \
-                                 self.__commands['PING'] + \
-                                 self.__control_sum + \
-                                 self.__stop_byte
-                self.__port.reset_input_buffer()
-                self.__port.write(message)
-                try:
-                    answer = self.__port.read(5)
-                    if answer:
-                        self.set_address(address.to_bytes(length=1, byteorder='big', signed=False))
-                        break
-                except serial.SerialTimeoutException as e:
-                    print(e)
-                    continue
-
-    def set_address(self, address: bytes) -> None:
-        self.__address = address
-
-    def __make_frame(self, command: str) -> bytes:
-        match command:
-            case 'PING' | 'STATUS' | 'INFO' | 'STOP':
-                message: bytes = self.__start_byte + \
-                                 self.__address + \
-                                 self.__commands[command] + \
-                                 self.__control_sum + \
-                                 self.__stop_byte
-            case _:
-                raise Exception('Making frame for this command not realized!')
-        return message
-
-    def __parse_status(self, status: bytes) -> None:
-        hex_status = status.hex()[6:-4]
-        list_status = []
-        for i in range(0, 21, 2):
-            list_status.append(hex_status[i:i + 2])
-        self.status = {
-            'state_flags': list_status[0],
-            'encoder': int(''.join(list_status[1:3]), base=16),
-            'step_generator': int(''.join(list_status[3:7]), base=16),
-            'opt_flags': list_status[7],
-            'step_divider': list_status[8],
-            'clearance': list_status[9]
-        }
-
-    def get_status(self) -> None:
-        with self.__port:
-            message = self.__make_frame('STATUS')
-            self.__port.write(message)
-            try:
-                answer = self.__port.read(30)
-                print(answer)
-                self.__parse_status(answer)
-            except serial.SerialException as exception:
-                print(exception)
-
-    def get_info(self) -> None:
-        with self.__port:
-            message = self.__make_frame('INFO')
-            self.__port.write(message)
-            try:
-                answer = self.__port.read(30)
-                print(answer)
-            except serial.SerialException as exception:
-                print(exception)
-
-    def run(self, target_position: int, speed: int) -> None:
-        self.__target_position = target_position.to_bytes(length=4, byteorder='big', signed=False)
-        self.__speed = speed.to_bytes(length=2, byteorder='big', signed=False)
-        with self.__port:
-
-            message: bytes = self.__start_byte + \
-                             self.__address + \
-                             self.__commands['RUN'] + \
-                             self.__target_position + \
-                             self.__speed + \
-                             self.__control_sum + \
-                             self.__stop_byte
-            self.__port.write(message)
-            try:
-                answer = self.__port.read(10)
-                print(answer)
-            except serial.SerialException as exception:
-                print(exception)
+    def search_home(self) -> None:
+        _logger.info('Searching home started')
+        with self.device:
+            self.device.write_registers(slave=self.__address,
+                                        address=0,
+                                        values=[self.__commands['INIT'], 0, self.__speed_to_search_home_pos])
+            self.__update_info()
+            while self.__status:
+                self.__update_info()
+            if self.__current_pos != 0:
+                _logger.critical('Driver not in home position')
+            else:
+                _logger.info('Driver in home position')
 
     def stop(self) -> None:
-        with self.__port:
-            message = self.__make_frame('STOP')
-            self.__port.write(message)
-            try:
-                answer = self.__port.read(10)
-                print(answer.hex())
-            except serial.SerialException as exception:
-                print(exception)
+        with self.device:
+            self.device.write_registers(slave=self.__address,
+                                        address=0,
+                                        values=[self.__commands['STOP']])
+
+    def move_to_pos(self, position: int, speed: int) -> None:
+        _logger.info(f'Moving to position {position} started')
+        with self.device:
+            self.device.write_registers(slave=self.__address,
+                                        address=2,
+                                        values=[self.__commands['MOVE'], speed, self.__speed_to_search_home_pos,
+                                                position])
+            self.__update_info()
+            while self.__status:
+                self.__update_info()
+            if self.__current_pos != position:
+                _logger.critical('Driver not in set position')
+            else:
+                _logger.info('Driver in set position')
+
+    def go_to_pos_without_control(self, position: int, speed: int) -> None:
+        with self.device:
+            self.device.write_registers(slave=self.__address,
+                                        address=0,
+                                        values=[self.__commands['MOVE'], speed, self.__speed_to_search_home_pos,
+                                                position])
+
+    def __update_info(self) -> None:
+        with self.device:
+            received_data = self.device.read_holding_registers(slave=self.__address,
+                                                               count=3,
+                                                               address=8).registers
+        self.__status = bool(received_data[0])
+        self.__current_pos = unpack('<I', pack('<HH', *received_data[1:]))[0]
+
+    status = property(fget=__get_status)
