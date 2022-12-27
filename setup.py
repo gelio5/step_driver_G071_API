@@ -15,7 +15,7 @@ setup(
     author='Vladislav Reznik',
     author_email='vlreznik97@gmail.com',
     description='Stepper driver using MODBUS communication protocol API',
-    requires=['pyserial~=3.5', 'pymodbus~=3.0.2'],
+    requires=['pyserial', 'pymodbus'],
     zip_safe=True,
     platforms=['Linux', 'Win', 'Mac OS X'],
     install_requires = ['pyserial~=3.5', 'pymodbus~=3.0.2']
