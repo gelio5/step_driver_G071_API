@@ -30,19 +30,17 @@ class StepDriver:
     }
 
     def __init__(self, port: str, modbus_address: int, speed_to_search_home_pos: int = 5000):
-        self.device = ModbusSerialClient(
-            baudrate=115200,
-            port=port, )
+        self.device = ModbusSerialClient(baudrate=115200,
+                                         port=port, )
         self.__current_pos: int = 0
         self.__status: bool = False
         self.__address = modbus_address
         self.__speed_to_search_home_pos = speed_to_search_home_pos
 
-    def get_status(self) -> bool:
+    def __get_status(self) -> bool:
         return self.__status
 
     def search_home(self) -> None:
-
         _logger.info('Searching home started')
         with self.device:
             self.device.write_registers(slave=self.__address,
@@ -51,7 +49,6 @@ class StepDriver:
             self.__update_info()
             while self.__status:
                 self.__update_info()
-            print(self.__current_pos)
             if self.__current_pos != 0:
                 _logger.critical('Driver not in home position')
             else:
@@ -90,8 +87,7 @@ class StepDriver:
             received_data = self.device.read_holding_registers(slave=self.__address,
                                                                count=3,
                                                                address=8).registers
-            print(received_data)
         self.__status = bool(received_data[0])
         self.__current_pos = unpack('<I', pack('<HH', *received_data[1:]))[0]
 
-    status = property(fget=get_status)
+    status = property(fget=__get_status)
