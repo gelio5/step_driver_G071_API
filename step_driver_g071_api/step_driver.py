@@ -84,7 +84,7 @@ class StepDriver:
                                         address=0,
                                         values=[self.__commands['MOVE'], speed,
                                                 self.__speed_to_search_home_pos,
-                                                *divmod(position, 0xFFFF)])
+                                                *divmod(position, 0xFFFF)[::-1]])
             self.__update_info()
             while self.__status:
                 sleep(0.5)
