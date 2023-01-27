@@ -1,6 +1,7 @@
 """Stepper driver using MODBUS communication protocol"""
 import logging
 from struct import unpack, pack
+from time import sleep
 
 from pymodbus.client import ModbusSerialClient
 
@@ -24,6 +25,9 @@ class StepDriver:
         x_axis = StepDriver(port='COM3', modbus_address=4)
         x_axis.search_home()
         x_axis.move_to_pos(position=5000, speed=2000)
+
+    P.S.: Max. simultaneously working objects <= 10.
+        For simultaneously objects use moving methods in thread with pause between threads <= 50 ms.
     """
     __commands: dict = {
         'MOVE': 0x01,
@@ -52,6 +56,7 @@ class StepDriver:
                                                 self.__speed_to_search_home_pos])
             self.__update_info()
             while self.__status:
+                sleep(0.5)
                 self.__update_info()
             if self.__current_pos != 0:
                 _logger.critical('Driver not in home position')
@@ -76,6 +81,7 @@ class StepDriver:
                                                 position])
             self.__update_info()
             while self.__status:
+                sleep(0.5)
                 self.__update_info()
             if self.__current_pos != position:
                 _logger.critical('Driver not in set position')
