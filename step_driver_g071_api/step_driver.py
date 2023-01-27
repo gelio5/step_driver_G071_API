@@ -77,8 +77,8 @@ class StepDriver:
         _logger.info('Moving to position %i started', position)
         if self.__max_position:
             if position > self.__max_position:
-                raise ValueError("Position for {} driver must be <= {}".format(self.__address,
-                                                                               self.__max_position))
+                raise ValueError(f"Position for {self.__address} driver must be <="
+                                 f" {self.__max_position}")
         with self.device:
             self.device.write_registers(slave=self.__address,
                                         address=0,
@@ -98,8 +98,8 @@ class StepDriver:
         """Move to position without control"""
         if self.__max_position:
             if position > self.__max_position:
-                raise ValueError("Position for {} driver must be <= {}".format(self.__address,
-                                                                               self.__max_position))
+                raise ValueError(f"Position for {self.__address} driver must be <="
+                                 f" {self.__max_position}")
         with self.device:
             self.device.write_registers(slave=self.__address,
                                         address=0,
