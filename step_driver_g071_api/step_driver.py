@@ -84,7 +84,7 @@ class StepDriver:
                                         address=0,
                                         values=[self.__commands['MOVE'], speed,
                                                 self.__speed_to_search_home_pos,
-                                                position])
+                                                *divmod(position, 0xFFFF)])
             self.__update_info()
             while self.__status:
                 sleep(0.5)
@@ -105,7 +105,7 @@ class StepDriver:
                                         address=0,
                                         values=[self.__commands['MOVE'], speed,
                                                 self.__speed_to_search_home_pos,
-                                                position])
+                                                *divmod(position, 0xFFFF)[::-1]])
 
     def __update_info(self) -> None:
         """Update info about driver"""
