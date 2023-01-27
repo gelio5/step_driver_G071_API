@@ -70,7 +70,7 @@ class StepDriver:
         _logger.info('Moving to position %i started', position)
         with self.device:
             self.device.write_registers(slave=self.__address,
-                                        address=2,
+                                        address=0,
                                         values=[self.__commands['MOVE'], speed,
                                                 self.__speed_to_search_home_pos,
                                                 position])
