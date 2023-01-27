@@ -35,13 +35,15 @@ class StepDriver:
         'STOP': 0x04
     }
 
-    def __init__(self, port: str, modbus_address: int, speed_to_search_home_pos: int = 5000):
+    def __init__(self, port: str, modbus_address: int, speed_to_search_home_pos: int = 5000,
+                 max_pos: int = None):
         self.device = ModbusSerialClient(baudrate=115200,
                                          port=port, )
         self.__current_pos: int = 0
         self.__status: bool = False
         self.__address = modbus_address
         self.__speed_to_search_home_pos = speed_to_search_home_pos
+        self.__max_position = max_pos
 
     def __get_status(self) -> bool:
         return self.__status
@@ -73,6 +75,10 @@ class StepDriver:
     def move_to_pos(self, position: int, speed: int) -> None:
         """Move to position with set speed"""
         _logger.info('Moving to position %i started', position)
+        if self.__max_position:
+            if position > self.__max_position:
+                raise ValueError("Position for {} driver must be <= {}".format(self.__address,
+                                                                               self.__max_position))
         with self.device:
             self.device.write_registers(slave=self.__address,
                                         address=0,
@@ -90,6 +96,10 @@ class StepDriver:
 
     def go_to_pos_without_control(self, position: int, speed: int) -> None:
         """Move to position without control"""
+        if self.__max_position:
+            if position > self.__max_position:
+                raise ValueError("Position for {} driver must be <= {}".format(self.__address,
+                                                                               self.__max_position))
         with self.device:
             self.device.write_registers(slave=self.__address,
                                         address=0,
