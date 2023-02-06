@@ -8,7 +8,7 @@ from setuptools import setup
 
 setup(
     name='step_driver_g071_api',
-    version='0.6',
+    version='0.7',
     packages=['step_driver_g071_api'],
     url='https://github.com/gelio5/step_driver_G071_API.git',
     license='MIT',
