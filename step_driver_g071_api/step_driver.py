@@ -64,7 +64,8 @@ class StepDriver:
                 sleep(0.5)
                 self._update_info()
             if self._current_pos != 0:
-                _logger.critical('Driver not in home position')
+                _logger.critical(f'Driver with MODBUS address {self._address} not in home position')
+                _logger.critical(f'Current position is {self._current_pos}')
             else:
                 _logger.info('Driver in home position')
 
@@ -93,7 +94,9 @@ class StepDriver:
                 sleep(0.5)
                 self._update_info()
             if self._current_pos != position:
-                _logger.critical('Driver not in set position')
+                _logger.critical(f'Driver with MODBUS address {self._address} not in set position')
+                _logger.critical(f'Set position is {position}')
+                _logger.critical(f'Current position is {self._current_pos}')
             else:
                 _logger.info('Driver in set position')
 
