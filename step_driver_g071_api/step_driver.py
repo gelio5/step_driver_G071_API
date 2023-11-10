@@ -127,6 +127,10 @@ class StepDriver:
     def _update_encoder(self) -> None:
         """Update encoder value"""
         with self.device:
+            self.device.write_registers(slave=self._address,
+                                        address=0,
+                                        values=[self._commands['UPDATE']])
+        with self.device:
             received_data = self.device.read_holding_registers(slave=self._address,
                                                                count=1,
                                                                address=12).registers
