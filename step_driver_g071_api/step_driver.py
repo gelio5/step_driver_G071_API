@@ -37,6 +37,7 @@ class StepDriver:
                  max_pos: int = None):
         self._commands: dict = {
             'MOVE': 0x01,
+            'UPDATE': 0x02,
             'INIT': 0x03,
             'STOP': 0x04
         }
@@ -47,6 +48,7 @@ class StepDriver:
         self._address = modbus_address
         self._speed_to_search_home_pos = speed_to_search_home_pos
         self._max_position = max_pos
+        self._encoder = 0
 
     def _get_status(self) -> bool:
         return self._status
@@ -122,4 +124,15 @@ class StepDriver:
         self._status = bool(received_data[0])
         self._current_pos = unpack('<I', pack('<HH', *received_data[1:]))[0]
 
+    def _update_encoder(self) -> None:
+        """Update encoder value"""
+        with self.device:
+            received_data = self.device.read_holding_registers(slave=self._address,
+                                                               count=1,
+                                                               address=12).registers
+        self._encoder = unpack('<I', pack('<H', *received_data[0]))[0]
+
+    def _get_encoder(self) -> int:
+        return self._encoder
     status = property(fget=_get_status)
+    encoder = property(fget=_get_encoder)
