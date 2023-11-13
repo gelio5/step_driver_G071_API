@@ -48,7 +48,7 @@ class StepDriver:
         self._address = modbus_address
         self._speed_to_search_home_pos = speed_to_search_home_pos
         self._max_position = max_pos
-        self._encoder = 0
+        self._encoder: int = 0
 
     def _get_status(self) -> bool:
         return self._status
@@ -125,7 +125,7 @@ class StepDriver:
         self._current_pos = unpack('<I', pack('<HH', *received_data[1:]))[0]
 
     def _update_encoder(self) -> None:
-        """Update encoder value"""
+        """Update encoder value by register 13 READ, expected range [0 ... 4095]"""
         with self.device:
             self.device.write_registers(slave=self._address,
                                         address=0,
