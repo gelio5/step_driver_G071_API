@@ -30,6 +30,8 @@ class StepDriver:
         For simultaneously objects use moving methods in thread with pause between threads <= 50 ms.
     """
 
+    # pylint: disable=too-many-instance-attributes
+
     def __init__(self,
                  port: str,
                  modbus_address: int,
