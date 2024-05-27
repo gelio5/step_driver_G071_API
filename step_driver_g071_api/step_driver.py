@@ -1,11 +1,43 @@
 """Stepper driver using MODBUS communication protocol"""
 import logging
+from functools import wraps
 from struct import unpack, pack
 from time import sleep
 
 from pymodbus.client import ModbusSerialClient
+from pymodbus.exceptions import ModbusException
+from serial.serialutil import SerialException
 
 _logger = logging.getLogger(__name__)
+
+
+def retry(
+        exception_to_check,
+        num_retries: int = 5,
+        sleep_time: float = 0.01,
+):
+    def decorate(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            exception_to_raise_in_fall = BaseException
+            for i in range(1, num_retries + 1):
+                try:
+                    return func(*args, **kwargs)
+                except exception_to_check as received_exception:
+                    exception_to_raise_in_fall = received_exception
+                    print(
+                        f"{func.__name__} raised {received_exception.__class__.__name__}. \n "
+                        f"{received_exception} \n"
+                        f"Retrying..."
+                    )
+
+                    if i < num_retries:
+                        sleep(sleep_time)
+            raise exception_to_raise_in_fall
+
+        return wrapper
+
+    return decorate
 
 
 class StepDriver:
@@ -51,9 +83,6 @@ class StepDriver:
         self._speed_to_search_home_pos = speed_to_search_home_pos
         self._max_position = max_pos
         self._encoder: int = 0
-
-    def _get_status(self) -> bool:
-        return self._status
 
     def search_home(self) -> None:
         """Search home position"""
@@ -117,6 +146,8 @@ class StepDriver:
                                                 self._speed_to_search_home_pos,
                                                 *divmod(position, 0xFFFF)[::-1]])
 
+    @retry(exception_to_check=SerialException)
+    @retry(exception_to_check=ModbusException)
     def _update_info(self) -> None:
         """Update info about driver"""
         with self.device:
@@ -126,6 +157,8 @@ class StepDriver:
         self._status = bool(received_data[0])
         self._current_pos = unpack('<I', pack('<HH', *received_data[1:]))[0]
 
+    @retry(exception_to_check=SerialException)
+    @retry(exception_to_check=Exception)
     def _update_encoder(self) -> None:
         """Update encoder value by register 13 READ, expected range [0 ... 4095]"""
         with self.device:
@@ -138,7 +171,10 @@ class StepDriver:
                                                                address=12).registers
         self._encoder = unpack('<I', pack('<H', *received_data[0]))[0]
 
-    def _get_encoder(self) -> int:
+    @property
+    def status(self):
+        return self._status
+
+    @property
+    def encoder(self):
         return self._encoder
-    status = property(fget=_get_status)
-    encoder = property(fget=_get_encoder)
