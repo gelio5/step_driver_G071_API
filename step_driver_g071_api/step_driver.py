@@ -16,6 +16,7 @@ def retry(
         num_retries: int = 5,
         sleep_time: float = 0.01,
 ):
+    """Using for decorate multiple tries of function calling"""
     def decorate(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -173,8 +174,10 @@ class StepDriver:
 
     @property
     def status(self):
+        """Getter for private status field"""
         return self._status
 
     @property
     def encoder(self):
+        """Getter for private encoder field"""
         return self._encoder
