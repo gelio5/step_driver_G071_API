@@ -17,6 +17,7 @@ def retry(
         sleep_time: float = 0.01,
 ):
     """Using for decorate multiple tries of function calling"""
+
     def decorate(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -147,6 +148,7 @@ class StepDriver:
                                                 self._speed_to_search_home_pos,
                                                 *divmod(position, 0xFFFF)[::-1]])
 
+    @retry(exception_to_check=AttributeError)
     @retry(exception_to_check=SerialException)
     @retry(exception_to_check=ModbusException)
     def _update_info(self) -> None:
@@ -158,8 +160,9 @@ class StepDriver:
         self._status = bool(received_data[0])
         self._current_pos = unpack('<I', pack('<HH', *received_data[1:]))[0]
 
+    @retry(exception_to_check=AttributeError)
     @retry(exception_to_check=SerialException)
-    @retry(exception_to_check=Exception)
+    @retry(exception_to_check=ModbusException)
     def _update_encoder(self) -> None:
         """Update encoder value by register 13 READ, expected range [0 ... 4095]"""
         with self.device:
